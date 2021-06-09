@@ -36,6 +36,11 @@
 // @match *://*.hentaifox.com/g/*
 // @match *://*.hentai2read.com/*/*/*
 // @match *://*.hentai.ms/manga/*/*
+// @match *://www.lunu8.com/web/*
+// @match *://www.taotu55.net/w/*/*
+// @match *://www.mm131.net/*/*
+// @match *://www.mzitu.com/*
+// @match *://www.tuaoo.cc/*/*
 // -- NSFW END
 // -- FOOLSLIDE NSFW START
 // @match *://reader.yuriproject.net/read/*
@@ -47,9 +52,8 @@
 // @match *://hentai.cafe/manga/read/*
 // @match *://*.yuri-ism.net/slide/read/*
 // -- FOOLSLIDE NSFW END
-// @require https://greasyfork.org/scripts/692-manga-loader/code/Manga%20Loader.user.js?29
+// @require https://github.com/littlebees/manga-loader/raw/one-page-with-mutiple-pics/manga-loader.user.js
 // ==/UserScript==
- 
 /**
 Sample Implementation:
 {
@@ -69,11 +73,9 @@ Sample Implementation:
     // to continue loading execute callback with img to append as first parameter and next url as second parameter
     // only really needs to be used on sites that have really unusual ways of loading images or depend on javascript
   }
- 
   Any of the CSS selectors can be functions instead that return the desired value.
 }
 */
- 
 // reusable functions to insert in implementations
 var reuse = {
   encodeChinese: function(xhr) {
@@ -83,7 +85,6 @@ var reuse = {
     return 'N/A';
   }
 };
- 
 var exUtil = {
   clearAllTimeouts: function() {
     var id = window.setTimeout(function() {}, 0);
@@ -92,8 +93,104 @@ var exUtil = {
     }
   }
 };
- 
+var getPageInfo2 = function(xhr,addAndLoad, img_css, next_css) {
+    return function() {
+        var ctx = document.implementation.createHTMLDocument();
+        ctx.body.innerHTML = xhr.response;
+        try {
+            // find image and link to next page
+            var nextUrl = getEl(next_css, ctx).href;
+            var imgs = getEls(img_css, ctx).map(function(page) { return page.src; });
+            for(let i=0;i<imgs.length-1;i++) {
+                addAndLoad(imgs[i],'whatever',false);
+            }
+            addAndLoad(imgs[imgs.length-1],nextUrl,true);
+        } catch (e) {
+            if (xhr.status == 503 && retries > 0) {
+                log('xhr status ' + xhr.status + ' retrieving ' + xhr.responseURL + ', ' + retries-- + ' retries remaining');
+                window.setTimeout(function() {
+                    xhr.open('get', xhr.responseURL);
+                    xhr.send();
+                }, 500);
+            } else {
+                log(e);
+                log('error getting details from next page, assuming end of chapter.');
+            }
+        }
+    };
+};
+
 var nsfwimp = [{
+    name: 'taotu55',
+    match: "^https?://www.taotu55.net/w/.*/.*",
+    img: 'body > div.bcen > div:nth-child(1) > div.content > img',
+    next: 'body > div.bcen > div:nth-child(2) > div.NewPages > ul > li:last-child > a',
+    numpages: function(ctx) {
+        var last = getEl('body > div.bcen > div:nth-child(2) > div.NewPages > ul > li:nth-last-child(1) > a',ctx).text;
+        if (!isNaN(last)) {
+            return parseInt(last,10);
+        } else {
+            return parseInt(getEl('body > div.bcen > div:nth-child(2) > div.NewPages > ul > li:nth-last-child(2) > a',ctx).text, 10);
+        }
+    },
+    pages: function(url, num, cb, ex,idontcare,ctx) {
+        var colonIdx = url.indexOf(':');
+        var xhr = new XMLHttpRequest();
+        if(colonIdx > -1) {
+            url = location.protocol + url.slice(colonIdx + 1);
+        }
+        xhr.open('get', url);
+        xhr.onload = getPageInfo2(xhr,cb, this.img, this.next);
+        xhr.onerror = function() {
+            log('failed to load page, aborting', 'error');
+        };
+        xhr.send();
+    },
+    curpage: 'body > div.bcen > div:nth-child(2) > div.NewPages > ul > li.thisclass > a'
+},{
+  name: 'tuaoo',
+  match: "^https?://www.tuaoo.cc/post/[0-9]+\.html.*",
+  img: '#container > main > article > div.entry > p > a > img',
+  next: '#dm-fy > li.next-page > a',
+  numpages: '#dm-fy > li:nth-last-child(4)',
+  curpage: '#dm-fy > li.dm-fy-active > span'
+},{
+  name: 'mzitu',
+  match: "^https?://www.mzitu.com/.*[/.]*",
+  img: 'body > div.main > div.content > div.main-image > p > a > img',
+  next: 'body > div.main > div.content > div.pagenavi > a:last-child',
+  curpage: function(ctx) {
+        var es = getEl('body > div.main > div.content > div.pagenavi',ctx).children;
+        for (var i=0;i<es.length;i++) {
+            console.log(es[i],es[i].tagName,es[i].className)
+            console.log(!(es[i].className === "dots"))
+            console.log(es[i].tagName === "SPAN")
+            console.log(es[i].textContent)
+           if (es[i].tagName === "SPAN" && !(es[i].className === "dots")) {
+               return parseInt(es[i].textContent,10)
+           }
+        }
+      return 1;
+    },
+  numpages: 'body > div.main > div.content > div.pagenavi > a:nth-last-child(2) > span'
+},{
+  name: 'mm131',
+  match: "^https?://www.mm131.net/.*/.*",
+  img: 'body > div.content > div.content-pic > a > img',
+  next: 'body > div.content > div.content-page > a:last-child',
+  numpages: function(ctx) {
+     var ee = getEl("body > div.content > div.content-page > span.page-ch",ctx);
+    return parseInt(ee.textContent.substring(1,ee.textContent.length-1),10);
+  },
+  curpage: 'body > div.content > div.content-page > span.page_now'
+},{
+  name: 'lunu8',
+  match: "^https?://www.lunu8.com/web/.*",
+  img: '#container > main > article > div.entry > p > a > img',
+  next: '#dm-fy > li.next-page > a',
+  numpages: '#dm-fy > li:nth-last-child(3)',
+  curpage: '#dm-fy > li.dm-fy-active > span'
+},{
   name: 'geh-and-exh',
   match: "^https?://(e-hentai|exhentai).org/s/.*/.*",
   img: '.sni > a > img, #img',
@@ -557,6 +654,6 @@ var nsfwimp = [{
     return parseInt(getEl('center > a').parentNode.textContent.match(/\/([0-9]+)/)[1]);
   }
 }];
- 
+
 log('loading nsfw implementations...');
 MLoaderLoadImps(nsfwimp);
