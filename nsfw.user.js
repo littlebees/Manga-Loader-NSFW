@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name       Manga Loader NSFW
 // @namespace  http://www.fuzetsu.com/MangaLoaderNSFW
-// @version    1.0.57
+// @version    1.0.58
 // @description  Loads manga chapter into one page in a long strip format, supports switching chapters and works for a variety of sites, minimal script with no dependencies, easy to implement new sites, loads quickly and works on mobile devices through bookmarklet
 // @copyright  2016+, fuzetsu
 // @noframes
@@ -41,6 +41,7 @@
 // @match *://www.mm131.net/*/*
 // @match *://www.mzitu.com/*
 // @match *://www.tuaoo.cc/*/*
+// @match *://www.wnacg.pw/*
 // -- NSFW END
 // -- FOOLSLIDE NSFW START
 // @match *://reader.yuriproject.net/read/*
@@ -121,16 +122,30 @@ var getPageInfo2 = function(xhr,addAndLoad, img_css, next_css) {
 };
 
 var nsfwimp = [{
+  name: 'wnacg',
+  match: "^https?://www.wnacg.pw/photos-view.+\.html",
+  img: '#picarea',
+  next: '#imgarea > a',
+  numpages: function (ctx) {
+    var arr = getEl("body > div.newpagewrap > div > span", ctx).textContent.split("/");
+    if (arr.length == 2) {
+      return parseInt(arr[1], 10);
+    } else {
+      return 0;
+    }
+  },
+  curpage: 'body > div.newpagewrap > div > span > b'
+}, {
     name: 'taotu55',
     match: "^https?://www.taotu55.net/w/.*/.*",
     img: 'body > div.bcen > div:nth-child(1) > div.content > img',
     next: 'body > div.bcen > div:nth-child(2) > div.NewPages > ul > li:last-child > a',
     numpages: function(ctx) {
-        var last = getEl('body > div.bcen > div:nth-child(2) > div.NewPages > ul > li:nth-last-child(1) > a',ctx).text;
+        var last = getEl('body > div.bcen > div:nth-child(2) > div.NewPages > ul > li:nth-last-child(1) > a',ctx).textContent;
         if (!isNaN(last)) {
             return parseInt(last,10);
         } else {
-            return parseInt(getEl('body > div.bcen > div:nth-child(2) > div.NewPages > ul > li:nth-last-child(2) > a',ctx).text, 10);
+            return parseInt(getEl('body > div.bcen > div:nth-child(2) > div.NewPages > ul > li:nth-last-child(2) > a',ctx).textContent, 10);
         }
     },
     pages: function(url, num, cb, ex,idontcare,ctx) {

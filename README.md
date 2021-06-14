@@ -8,3 +8,4 @@ Added sites:
 * mm131.net
 * mzitu.com
 * tuaoo.cc
+* www.wnacg.pw
