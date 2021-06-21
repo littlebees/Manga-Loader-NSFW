@@ -43,6 +43,7 @@
 // @match *://www.tuaoo.cc/*/*
 // @match *://www.wnacg.pw/*
 // @match *://www.beautyleg7.com/*/*/*
+// @match *://www.tujigu.com/*/*
 // -- NSFW END
 // -- FOOLSLIDE NSFW START
 // @match *://reader.yuriproject.net/read/*
@@ -98,6 +99,23 @@ var exUtil = {
 
 
 var nsfwimp = [{
+    name: 'tujigu',
+    match: "^https?://www.tujigu.com/a/.*",
+    img: 'body > div.content',
+    next: '#pages > a:last-child',
+    numpages: '#pages > a:nth-last-child(2)',
+    toImgs: function(imgArr) {
+      return Array.prototype.map.call(imgArr, function(page) { return page.src; });
+    },
+    curpage: function(ctx) {
+        var mylist = getEl('#pages');
+        for (var i=0; i < mylist.children.length; i++) {
+            if (mylist.children[i].tagName == 'SPAN')
+                return parseInt(mylist.children[i].text, 10)
+        }
+        return mylist.children.length;
+    }
+},{
     name: 'beautyleg7',
     match: "^https?://www.beautyleg7.com/.*/.*/.*\.html",
     img: 'body > div > div:nth-child(2) > div.content > div.contents',
