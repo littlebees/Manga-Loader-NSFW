@@ -9,3 +9,4 @@ Added sites:
 * mzitu.com
 * tuaoo.cc
 * www.wnacg.pw
+* www.beautyleg7.com

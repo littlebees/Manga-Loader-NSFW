@@ -42,6 +42,7 @@
 // @match *://www.mzitu.com/*
 // @match *://www.tuaoo.cc/*/*
 // @match *://www.wnacg.pw/*
+// @match *://www.beautyleg7.com/*/*/*
 // -- NSFW END
 // -- FOOLSLIDE NSFW START
 // @match *://reader.yuriproject.net/read/*
@@ -121,7 +122,55 @@ var getPageInfo2 = function(xhr,addAndLoad, img_css, next_css) {
     };
 };
 
+var getPageInfo3 = function(xhr,addAndLoad, img_css, next_css) {
+    return function() {
+        var ctx = document.implementation.createHTMLDocument();
+        ctx.body.innerHTML = xhr.response;
+        try {
+            // find image and link to next page
+            var nextUrl = getEl(next_css, ctx).href;
+            var imgs = getEls(img_css, ctx).map(function(page) { return page.href; });
+            for(let i=0;i<imgs.length-1;i++) {
+                addAndLoad(imgs[i],'whatever',false);
+            }
+            addAndLoad(imgs[imgs.length-1],nextUrl,true);
+        } catch (e) {
+            if (xhr.status == 503 && retries > 0) {
+                log('xhr status ' + xhr.status + ' retrieving ' + xhr.responseURL + ', ' + retries-- + ' retries remaining');
+                window.setTimeout(function() {
+                    xhr.open('get', xhr.responseURL);
+                    xhr.send();
+                }, 500);
+            } else {
+                log(e);
+                log('error getting details from next page, assuming end of chapter.');
+            }
+        }
+    };
+};
+
+
 var nsfwimp = [{
+    name: 'beautyleg7',
+    match: "^https?://www.beautyleg7.com/.*/.*/.*\.html",
+    img: 'body > div > div:nth-child(2) > div.content > div.contents > a',
+    next: 'body > div > div:nth-child(2) > div.content > div.mtop > div > li:last-child > a',
+    numpages: 'body > div > div:nth-child(2) > div.content > div.mtop > div > li:nth-last-child(2) > a',
+    pages: function(url, num, cb, ex,idontcare,ctx) {
+        var colonIdx = url.indexOf(':');
+        var xhr = new XMLHttpRequest();
+        if(colonIdx > -1) {
+            url = location.protocol + url.slice(colonIdx + 1);
+        }
+        xhr.open('get', url);
+        xhr.onload = getPageInfo3(xhr,cb, this.img, this.next);
+        xhr.onerror = function() {
+            log('failed to load page, aborting', 'error');
+        };
+        xhr.send();
+    },
+    curpage: 'body > div > div:nth-child(2) > div.content > div.mtop > div > li.thisclass > a'
+},{
   name: 'wnacg',
   match: "^https?://www.wnacg.pw/photos-view.+\.html",
   img: '#picarea',
