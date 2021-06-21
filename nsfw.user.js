@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name       Manga Loader NSFW
 // @namespace  http://www.fuzetsu.com/MangaLoaderNSFW
-// @version    1.0.59
+// @version    1.0.60
 // @description  Loads manga chapter into one page in a long strip format, supports switching chapters and works for a variety of sites, minimal script with no dependencies, easy to implement new sites, loads quickly and works on mobile devices through bookmarklet
 // @copyright  2016+, fuzetsu
 // @noframes
@@ -104,7 +104,7 @@ var nsfwimp = [{
     next: 'body > div > div:nth-child(2) > div.content > div.mtop > div > li:last-child > a',
     numpages: 'body > div > div:nth-child(2) > div.content > div.mtop > div > li:nth-last-child(2) > a',
     toImgs: function(imgArr) {
-      return imgArr.map(function(page) { return page.href; });
+      return Array.prototype.map.call(imgArr, function(page) { return page.href; });
     },
     curpage: 'body > div > div:nth-child(2) > div.content > div.mtop > div > li.thisclass > a'
 },{
@@ -135,7 +135,7 @@ var nsfwimp = [{
         }
     },
     toImgs: function(imgArr) {
-      return imgArr.map(function(page) { return page.src; });
+      return Array.prototype.map.call(imgArr, function(page) { return page.src; });
     },
     curpage: 'body > div.bcen > div:nth-child(2) > div.NewPages > ul > li.thisclass > a'
 },{
