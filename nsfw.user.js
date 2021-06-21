@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name       Manga Loader NSFW
 // @namespace  http://www.fuzetsu.com/MangaLoaderNSFW
-// @version    1.0.58
+// @version    1.0.59
 // @description  Loads manga chapter into one page in a long strip format, supports switching chapters and works for a variety of sites, minimal script with no dependencies, easy to implement new sites, loads quickly and works on mobile devices through bookmarklet
 // @copyright  2016+, fuzetsu
 // @noframes
@@ -54,7 +54,7 @@
 // @match *://hentai.cafe/manga/read/*
 // @match *://*.yuri-ism.net/slide/read/*
 // -- FOOLSLIDE NSFW END
-// @require https://github.com/littlebees/manga-loader/raw/one-page-with-mutiple-pics/manga-loader.user.js
+// @require https://github.com/littlebees/manga-loader/raw/fixbug/manga-loader.user.js
 // ==/UserScript==
 /**
 Sample Implementation:
@@ -95,79 +95,16 @@ var exUtil = {
     }
   }
 };
-var getPageInfo2 = function(xhr,addAndLoad, img_css, next_css) {
-    return function() {
-        var ctx = document.implementation.createHTMLDocument();
-        ctx.body.innerHTML = xhr.response;
-        try {
-            // find image and link to next page
-            var nextUrl = getEl(next_css, ctx).href;
-            var imgs = getEls(img_css, ctx).map(function(page) { return page.src; });
-            for(let i=0;i<imgs.length-1;i++) {
-                addAndLoad(imgs[i],'whatever',false);
-            }
-            addAndLoad(imgs[imgs.length-1],nextUrl,true);
-        } catch (e) {
-            if (xhr.status == 503 && retries > 0) {
-                log('xhr status ' + xhr.status + ' retrieving ' + xhr.responseURL + ', ' + retries-- + ' retries remaining');
-                window.setTimeout(function() {
-                    xhr.open('get', xhr.responseURL);
-                    xhr.send();
-                }, 500);
-            } else {
-                log(e);
-                log('error getting details from next page, assuming end of chapter.');
-            }
-        }
-    };
-};
-
-var getPageInfo3 = function(xhr,addAndLoad, img_css, next_css) {
-    return function() {
-        var ctx = document.implementation.createHTMLDocument();
-        ctx.body.innerHTML = xhr.response;
-        try {
-            // find image and link to next page
-            var nextUrl = getEl(next_css, ctx).href;
-            var imgs = getEls(img_css, ctx).map(function(page) { return page.href; });
-            for(let i=0;i<imgs.length-1;i++) {
-                addAndLoad(imgs[i],'whatever',false);
-            }
-            addAndLoad(imgs[imgs.length-1],nextUrl,true);
-        } catch (e) {
-            if (xhr.status == 503 && retries > 0) {
-                log('xhr status ' + xhr.status + ' retrieving ' + xhr.responseURL + ', ' + retries-- + ' retries remaining');
-                window.setTimeout(function() {
-                    xhr.open('get', xhr.responseURL);
-                    xhr.send();
-                }, 500);
-            } else {
-                log(e);
-                log('error getting details from next page, assuming end of chapter.');
-            }
-        }
-    };
-};
 
 
 var nsfwimp = [{
     name: 'beautyleg7',
     match: "^https?://www.beautyleg7.com/.*/.*/.*\.html",
-    img: 'body > div > div:nth-child(2) > div.content > div.contents > a',
+    img: 'body > div > div:nth-child(2) > div.content > div.contents',
     next: 'body > div > div:nth-child(2) > div.content > div.mtop > div > li:last-child > a',
     numpages: 'body > div > div:nth-child(2) > div.content > div.mtop > div > li:nth-last-child(2) > a',
-    pages: function(url, num, cb, ex,idontcare,ctx) {
-        var colonIdx = url.indexOf(':');
-        var xhr = new XMLHttpRequest();
-        if(colonIdx > -1) {
-            url = location.protocol + url.slice(colonIdx + 1);
-        }
-        xhr.open('get', url);
-        xhr.onload = getPageInfo3(xhr,cb, this.img, this.next);
-        xhr.onerror = function() {
-            log('failed to load page, aborting', 'error');
-        };
-        xhr.send();
+    toImgs: function(imgArr) {
+      return imgArr.map(function(page) { return page.href; });
     },
     curpage: 'body > div > div:nth-child(2) > div.content > div.mtop > div > li.thisclass > a'
 },{
@@ -187,7 +124,7 @@ var nsfwimp = [{
 }, {
     name: 'taotu55',
     match: "^https?://www.taotu55.net/w/.*/.*",
-    img: 'body > div.bcen > div:nth-child(1) > div.content > img',
+    img: 'body > div.bcen > div:nth-child(1) > div.content',
     next: 'body > div.bcen > div:nth-child(2) > div.NewPages > ul > li:last-child > a',
     numpages: function(ctx) {
         var last = getEl('body > div.bcen > div:nth-child(2) > div.NewPages > ul > li:nth-last-child(1) > a',ctx).textContent;
@@ -197,18 +134,8 @@ var nsfwimp = [{
             return parseInt(getEl('body > div.bcen > div:nth-child(2) > div.NewPages > ul > li:nth-last-child(2) > a',ctx).textContent, 10);
         }
     },
-    pages: function(url, num, cb, ex,idontcare,ctx) {
-        var colonIdx = url.indexOf(':');
-        var xhr = new XMLHttpRequest();
-        if(colonIdx > -1) {
-            url = location.protocol + url.slice(colonIdx + 1);
-        }
-        xhr.open('get', url);
-        xhr.onload = getPageInfo2(xhr,cb, this.img, this.next);
-        xhr.onerror = function() {
-            log('failed to load page, aborting', 'error');
-        };
-        xhr.send();
+    toImgs: function(imgArr) {
+      return imgArr.map(function(page) { return page.src; });
     },
     curpage: 'body > div.bcen > div:nth-child(2) > div.NewPages > ul > li.thisclass > a'
 },{
