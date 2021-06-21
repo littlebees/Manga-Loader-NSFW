@@ -44,6 +44,7 @@
 // @match *://www.wnacg.pw/*
 // @match *://www.beautyleg7.com/*/*/*
 // @match *://www.tujigu.com/*/*
+// @match *://www.da12.cc/*/*/*
 // -- NSFW END
 // -- FOOLSLIDE NSFW START
 // @match *://reader.yuriproject.net/read/*
@@ -99,6 +100,19 @@ var exUtil = {
 
 
 var nsfwimp = [{
+    name: 'da12',
+    match: "^https?://www.da12.cc/to/.*/.*\.html",
+    img: 'body > div.content',
+    next: 'body > div.pages > a:last-child',
+    numpages: function(ctx) {
+        var el = getEl('body > div.pages > a:nth-child(1)').textContent;
+        return parseInt(el.slice(1, el.length-2), 10);
+    },
+    toImgs: function(imgArr) {
+      return Array.prototype.map.call(imgArr, function(page) { return page.src; });
+    },
+    curpage: 'body > div.pages > a.curpage'
+},{
     name: 'tujigu',
     match: "^https?://www.tujigu.com/a/.*",
     img: 'body > div.content',

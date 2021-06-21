@@ -11,3 +11,4 @@ Added sites:
 * www.wnacg.pw
 * www.beautyleg7.com
 * www.tujigu.com
+* www.da12.cc
