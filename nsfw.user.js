@@ -45,6 +45,7 @@
 // @match *://www.beautyleg7.com/*/*/*
 // @match *://www.tujigu.com/*/*
 // @match *://www.da12.cc/*/*/*
+// @match *://www.fnvshen.com/*/*
 // -- NSFW END
 // -- FOOLSLIDE NSFW START
 // @match *://reader.yuriproject.net/read/*
@@ -100,6 +101,25 @@ var exUtil = {
 
 
 var nsfwimp = [{
+    name: 'fnvshen',
+    match: "^https?://www.fnvshen.com/g/.+",
+    img: '#hgallery',
+    //next: '.a1:last-child',
+    next: function(context) {
+        var url = getEl('.a1:last-child', context).href;
+        console.log(url);
+        if (url[url.length-1] === "l") {
+            console.log("go")
+            return url;
+        } else {
+            console.log("done")
+            return null;
+        }
+    },
+    toImgs: function(imgArr) {
+      return Array.prototype.map.call(imgArr, function(page) { return page.src; });
+    }
+},{
     name: 'da12',
     match: "^https?://www.da12.cc/to/.*/.*\.html",
     img: 'body > div.content',
