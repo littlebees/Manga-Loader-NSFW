@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name       Manga Loader NSFW
 // @namespace  http://www.fuzetsu.com/MangaLoaderNSFW
-// @version    1.0.63
+// @version    1.0.64
 // @description  Loads manga chapter into one page in a long strip format, supports switching chapters and works for a variety of sites, minimal script with no dependencies, easy to implement new sites, loads quickly and works on mobile devices through bookmarklet
 // @copyright  2016+, fuzetsu
 // @noframes
@@ -46,6 +46,7 @@
 // @match *://www.tujigu.com/*/*
 // @match *://www.da12.cc/*/*/*
 // @match *://www.fnvshen.com/*/*
+// @match *://www.junmeitu.com/beauty/*
 // -- NSFW END
 // -- FOOLSLIDE NSFW START
 // @match *://reader.yuriproject.net/read/*
@@ -101,6 +102,13 @@ var exUtil = {
 
 
 var nsfwimp = [{
+    name: 'junmeitu',
+    match: "^https?://www.junmeitu.com/beauty/.+",
+    img: 'body > div.main > div.content > div.pictures > img',
+    //next: '.a1:last-child',
+    next: '#pages > a:last-child',
+    numpages: '#pages > a:nth-last-child(2)'
+},{
     name: 'fnvshen',
     match: "^https?://www.fnvshen.com/g/.+",
     img: '#hgallery',
